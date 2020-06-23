@@ -217,21 +217,22 @@ func (y *Youtube) parseVideoInfo() error {
 		return err
 	}
 
-	// Get video title and author.
-	title, author := getVideoTitleAuthor(answer)
-
 	var prData PlayerResponseData
 	if err := json.Unmarshal([]byte(streamMap[0]), &prData); err != nil {
 		fmt.Println(err)
 		panic("Player response json data has changed.")
 	}
 
-	// Get video download link
-	if prData.PlayabilityStatus.Status == "UNPLAYABLE" {
+	// check if this video is downloadable
+	if prData.PlayabilityStatus.Status == "UNPLAYABLE" || prData.PlayabilityStatus.Status == "LOGIN_REQUIRED" {
 		//Cannot playback on embedded video screen, could not download.
 		return errors.New(fmt.Sprint("Cannot playback and download, reason:", prData.PlayabilityStatus.Reason))
 	}
 
+	// Get video title and author.
+	title, author := getVideoTitleAuthor(answer)
+
+	// Get video download link
 	var streams []stream
 	for streamPos, streamRaw := range prData.StreamingData.Formats {
 		if streamRaw.MimeType == "" {
